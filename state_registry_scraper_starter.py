@@ -5,11 +5,13 @@ def get_registry_info(company_name, state_code):
     if state_code != "AZ":
         return {"error": "Only AZ scraping is implemented for now."}
 
-    search_url = "https://ecorp.azcc.gov/Common/BusinessNameSearch"
+    # ✅ Correct AZ Corporation Commission endpoint
+    search_url = "https://ecorp.azcc.gov/api/EntitySearch/GeneralSearch"
     headers = {
         "User-Agent": "Mozilla/5.0",
         "Content-Type": "application/json"
     }
+
     payload = {
         "searchTerm": company_name,
         "searchType": "StartsWith",
@@ -25,7 +27,7 @@ def get_registry_info(company_name, state_code):
         if not results or "entityInfoList" not in results or not results["entityInfoList"]:
             return {"error": "No match found in AZ registry."}
 
-        entity = results["entityInfoList"][0]  # Take the first match
+        entity = results["entityInfoList"][0]  # First match
 
         return {
             "legal_name": entity.get("entityName"),
