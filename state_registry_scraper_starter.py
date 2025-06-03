@@ -36,3 +36,4 @@ def get_registry_info(company_name, state_code):
         }
 
     except Exception as e:
+        return {"error": f"Failed to fetch AZ registry data: {str(e)}"}
