@@ -1,34 +1,38 @@
-
 import requests
 from bs4 import BeautifulSoup
 
 def get_registry_info(company_name, state_code):
-    # This is a placeholder URL – in a real scraper, you'd replace it with the state registry URL
-    url = f"https://example-registry.com/search?company={company_name}&state={state_code}"
+    if state_code != "AZ":
+        return {"error": "Only AZ scraping is implemented for now."}
 
+    search_url = "https://ecorp.azcc.gov/Common/BusinessNameSearch"
     headers = {
-        'User-Agent': 'Mozilla/5.0'
+        "User-Agent": "Mozilla/5.0",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "searchTerm": company_name,
+        "searchType": "StartsWith",
+        "entityType": "All",
+        "includePriorName": False
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.post(search_url, json=payload, headers=headers)
         response.raise_for_status()
-    except requests.RequestException as e:
-        return {"error": f"Failed to fetch data: {str(e)}"}
+        results = response.json()
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+        if not results or "entityInfoList" not in results or not results["entityInfoList"]:
+            return {"error": "No match found in AZ registry."}
 
-    # Placeholder logic to parse registry info
-    result = {
-        "legal_name": "Example Legal Name LLC",
-        "entity_type": "LLC",
-        "status": "Active",
-        "address": "123 Example Street, Sample City, ST 12345",
-        "registered_agent": "John Doe",
-    }
+        entity = results["entityInfoList"][0]  # Take the first match
 
-    return result
+        return {
+            "legal_name": entity.get("entityName"),
+            "entity_type": entity.get("entityType"),
+            "status": entity.get("entityStatusDescription"),
+            "address": entity.get("principalAddress"),
+            "registered_agent": entity.get("statutoryAgentName")
+        }
 
-# Example use
-if __name__ == "__main__":
-    print(get_registry_info("Acme Inc", "CA"))
+    except Exception as e:
